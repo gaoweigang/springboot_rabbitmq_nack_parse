@@ -1,0 +1,5 @@
+1.rabbbitmq helloworld
+https://blog.csdn.net/ztx114/article/details/78410727
+
+2.RabbitMQ消息队列-VirtualHost与权限管理
+https://blog.csdn.net/super_rd/article/details/71191851?utm_source=itdadao&utm_medium=referral
