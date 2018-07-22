@@ -2,15 +2,18 @@ package com.gwg.demo.config;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.amqp.core.AcknowledgeMode;
 import org.springframework.amqp.core.AmqpAdmin;
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
 import org.springframework.amqp.core.DirectExchange;
 import org.springframework.amqp.core.Queue;
+import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.amqp.rabbit.listener.RabbitListenerContainerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -36,7 +39,7 @@ public class RabbitConfig {
 	@Value("${spring.rabbitmq.queue}")
 	private String queueName;// 同时作为rountingkey
 	
-	@Value("${spring.rabbitmq.virtualHost}")
+	@Value("${spring.rabbitmq.virtual-host}")
 	private String virtualHost;// 同时作为rountingkey
 	
 
@@ -57,7 +60,7 @@ public class RabbitConfig {
 	
 	// 必须要生成bean，否则如果不会自动生成该EXCHANGE
 	@Bean
-	DirectExchange newOrderExchange() {
+	DirectExchange exchange() {
 		return new DirectExchange(exchangeName, true, true);
 	}
 
@@ -73,17 +76,25 @@ public class RabbitConfig {
 	 * 将交换器 与  队列 进行绑定，并指定队列名称
 	 */
 	@Bean
-	Binding bindingOrderNewKyp() {
-		return BindingBuilder.bind(Queue()).to(newOrderExchange()).with(queueName);
+	Binding binding() {
+		return BindingBuilder.bind(Queue()).to(exchange()).with(queueName);
 	}
 
-	@Bean(name = "${spring.rabbitmq.bean}")
+	@Bean
 	public RabbitTemplate rabbitTemplate() {
 		RabbitTemplate template = new RabbitTemplate(connectionFactory());
-		template.setExchange(exchangeName);
-		template.setQueue(queueName);
-		template.setRoutingKey(queueName);
 		return template;
+	}
+	/******************message listener************************************************************/
+	/**
+	 * 监听器配置
+	 */
+	@Bean
+	public RabbitListenerContainerFactory<?> rabbitListenerContainerFactory(){
+		SimpleRabbitListenerContainerFactory rabbitListenerContainerFactory = new SimpleRabbitListenerContainerFactory();
+		rabbitListenerContainerFactory.setConnectionFactory(connectionFactory());
+		rabbitListenerContainerFactory.setAcknowledgeMode(AcknowledgeMode.MANUAL);//设置消费者消息确认模式为手动
+		return rabbitListenerContainerFactory;
 	}
 	
 
