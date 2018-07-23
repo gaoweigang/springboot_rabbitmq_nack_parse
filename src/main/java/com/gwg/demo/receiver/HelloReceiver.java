@@ -11,13 +11,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import com.alibaba.fastjson.JSON;
 import com.rabbitmq.client.AMQP.BasicProperties;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
+import com.rabbitmq.client.GetResponse;
 import com.rabbitmq.client.ShutdownSignalException;
 
-@Component
+//@Component
 public class HelloReceiver {
 	private static final Logger logger = LoggerFactory.getLogger(HelloReceiver.class);
 	
@@ -27,10 +29,9 @@ public class HelloReceiver {
 	@Value("${spring.rabbitmq.queue}")
 	private String queue;
 
-	@RabbitListener(queues = "${spring.rabbitmq.queue}")
-    public void process(String hello) throws IOException {
+    public void process() throws IOException {
         
-		logger.info("消费开始....,hello:{}", hello);
+		logger.info("消费开始....,hello:{}");
 		Connection connection = connectionFactory.createConnection();
 		final Channel channel = connection.createChannel(false);
 		/*channel.exchangeDeclare(exchange, "direct", true, false, null);
@@ -39,51 +40,19 @@ public class HelloReceiver {
 		channel.queueBind(queue, exchange, routing);*/
 
 		// 第二个参数设为true为自动应答，false为手动ack
-		channel.basicConsume(queue, false, new DefaultConsumer(channel) {
-
-			@Override
-			public void handleDelivery(String consumerTag, Envelope envelope,
-					BasicProperties properties, byte[] body) throws IOException {
-
-				try {
-
-					Thread.sleep(10000);
-
-					logger.info(new String(body, "UTF-8"));
-
-					// 模拟异常
-
-					int i = 1 / 0;
-
-					// 手动ack
-
-					// channel.basicAck(envelope.getDeliveryTag(), false);
-
-				} catch (ShutdownSignalException e) {
-					
-					logger.info("抛弃此条消息1....");
-					// 抛弃此条消息
-					channel.basicNack(envelope.getDeliveryTag(), false, true);
-					e.printStackTrace();
-
-				} catch(Exception e){
-					logger.info("抛弃此条消息2....");
-					channel.basicNack(envelope.getDeliveryTag(), false, true);
-					e.printStackTrace();
-
-				} finally {
-					// 重新放入队列
-					//channel.basicNack(envelope.getDeliveryTag(), false, true);
-					logger.info("抛弃此条消息3....");
-					// 抛弃此条消息
-					//channel.basicNack(envelope.getDeliveryTag(), false, true);
-				}
-
-			}
-
-		});
-
+		GetResponse response = channel.basicGet(queue, false);
+		if(response != null){
+			logger.info("消息：{}",new String(response.getBody(), "UTF-8"));
+			channel.basicNack(response.getEnvelope().getDeliveryTag(), false, true);
+	
+		    
+		}
+		logger.info("game over ....");
 	
     }
+	
+	public static void main(String[] args) {
+		
+	}
  
 }

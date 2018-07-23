@@ -85,17 +85,5 @@ public class RabbitConfig {
 		RabbitTemplate template = new RabbitTemplate(connectionFactory());
 		return template;
 	}
-	/******************message listener************************************************************/
-	/**
-	 * 监听器配置
-	 */
-	@Bean
-	public RabbitListenerContainerFactory<?> rabbitListenerContainerFactory(){
-		SimpleRabbitListenerContainerFactory rabbitListenerContainerFactory = new SimpleRabbitListenerContainerFactory();
-		rabbitListenerContainerFactory.setConnectionFactory(connectionFactory());
-		rabbitListenerContainerFactory.setAcknowledgeMode(AcknowledgeMode.MANUAL);//设置消费者消息确认模式为手动
-		return rabbitListenerContainerFactory;
-	}
-	
 
 }
